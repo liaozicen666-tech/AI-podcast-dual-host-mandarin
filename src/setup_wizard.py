@@ -50,21 +50,27 @@ def save_double_persona(user_id: str, host_a: Dict, host_b: Dict) -> None:
     default_manager.save({"host_a": host_a, "host_b": host_b})
 
 
-def select_voice(archetype: str, gender: str, attitude: str) -> str:
-    """根据特征选择音色"""
+def select_voice(archetype: str, gender: str, attitude: str, age_group: str = "middle_aged") -> str:
+    """根据特征选择音色（考虑年龄）"""
     try:
         from src.voice_selector import VoiceSelector
         return VoiceSelector().suggest_voice(
             archetype=archetype,
             gender=gender,
-            attitude=attitude
+            attitude=attitude,
+            age_group=age_group
         )
     except:
-        # 默认音色
-        if gender == "male":
-            return "zh_male_liufei_uranus_bigtts"
-        else:
-            return "zh_female_vv_uranus_bigtts"
+        # 默认音色（根据年龄）
+        default_map = {
+            ("male", "youth"): "zh_male_shaonianzixin_uranus_bigtts",        # 少年梓辛
+            ("male", "middle_aged"): "zh_male_liufei_uranus_bigtts",         # 刘飞
+            ("male", "senior"): "zh_male_dayi_uranus_bigtts",                # 大壹
+            ("female", "youth"): "zh_female_xiaohe_uranus_bigtts",           # 小何
+            ("female", "middle_aged"): "zh_female_cancan_uranus_bigtts",     # 知性灿灿
+            ("female", "senior"): "zh_female_jitangnv_uranus_bigtts",        # 鸡汤女
+        }
+        return default_map.get((gender, age_group), "zh_male_liufei_uranus_bigtts")
 
 
 def expand_to_full_persona(traits: Dict) -> Dict:

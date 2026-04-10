@@ -24,6 +24,7 @@ class Identity(BaseModel):
     """身份层结构"""
     name: str = Field(default="", description="人物名称")
     archetype: str = Field(default="观察者", description="原型角色")
+    age_group: str = Field(default="middle_aged", description="年龄段: youth/young(青年), middle_aged(中年), senior(老年)")
     core_drive: str = Field(default="", description="核心驱动力")
     chemistry: str = Field(default="", description="互动风格")
 
@@ -289,7 +290,7 @@ def normalize_subagent_persona(persona_dict: dict, gender: str = "female") -> Di
     """
     接收外部Sub-Agent返回的Persona，执行本地兜底处理：
     - 填充默认值
-    - 语音映射（如果缺失voice_id）
+    - 语音映射（如果缺失voice_id，考虑年龄因素）
     - 截断signature_phrases到3个
 
     Args:
@@ -309,12 +310,18 @@ def normalize_subagent_persona(persona_dict: dict, gender: str = "female") -> Di
     import copy
     cleaned = copy.deepcopy(cleaned)
 
-    # 如果原始输入缺失voice_id，使用本地VoiceSelector推荐
+    # 如果原始输入缺失voice_id，使用本地VoiceSelector推荐（考虑年龄）
     if not original_voice_id:
         voice_selector = VoiceSelector()
         archetype = cleaned.get("identity", {}).get("archetype", "观察者")
         attitude = cleaned.get("expression", {}).get("attitude", "curious")
-        suggested = voice_selector.suggest_voice(archetype=archetype, attitude=attitude, gender=gender)
+        age_group = cleaned.get("identity", {}).get("age_group", "middle_aged")
+        suggested = voice_selector.suggest_voice(
+            archetype=archetype,
+            attitude=attitude,
+            gender=gender,
+            age_group=age_group
+        )
         cleaned["expression"]["voice_id"] = suggested
 
     return cleaned
